@@ -1,0 +1,490 @@
+{
+  "datasets": [
+    {
+      "name": "63fab333",
+      "displayName": "kpi1",
+      "queryLines": [
+        "-- Monthly revenue \r\n",
+        "SELECT \r\n",
+        "  year,\r\n",
+        "  month,\r\n",
+        "  month_name,\r\n",
+        "  ROUND(SUM(total_revenue), 2) AS revenue_usd\r\n",
+        "FROM electronic_retailer.03_Gold.data_cube_sales\r\n",
+        "WHERE year = 2016\r\n",
+        "GROUP BY year, month, month_name\r\n",
+        "ORDER BY month"
+      ],
+      "catalog": "electronic_retailer",
+      "schema": "03_gold"
+    },
+    {
+      "name": "31b020a2",
+      "displayName": "data_cube_sales",
+      "queryLines": [
+        ""
+      ],
+      "catalog": "electronic_retailer",
+      "schema": "03_gold"
+    },
+    {
+      "name": "7ad90c65",
+      "displayName": "kpi2",
+      "queryLines": [
+        "WITH monthly_revenue AS ( SELECT month, month_name, ROUND(SUM(total_revenue), 2) AS revenue_usd FROM electronic_retailer.03_Gold.data_cube_sales WHERE year = 2016 GROUP BY month, month_name ), total AS ( SELECT SUM(revenue_usd) AS total_revenue FROM monthly_revenue ) \r\n",
+        "SELECT month, month_name, revenue_usd, ROUND((revenue_usd / total_revenue) * 100, 2) AS percentage FROM monthly_revenue, total ORDER BY revenue_usd DESC LIMIT 3"
+      ]
+    },
+    {
+      "name": "c448dc67",
+      "displayName": "kpi3",
+      "queryLines": [
+        "WITH q2_revenue AS (\r\n",
+        "  SELECT \r\n",
+        "    category,\r\n",
+        "    ROUND(SUM(total_revenue), 2) AS peak_month_revenue\r\n",
+        "  FROM electronic_retailer.03_Gold.data_cube_sales\r\n",
+        "  WHERE year = 2016 AND month IN (4, 5, 6)\r\n",
+        "  GROUP BY category\r\n",
+        "),\r\n",
+        "total AS (\r\n",
+        "  SELECT SUM(peak_month_revenue) AS q2_total FROM q2_revenue\r\n",
+        ")\r\n",
+        "SELECT \r\n",
+        "  category,\r\n",
+        "  peak_month_revenue,\r\n",
+        "  ROUND((peak_month_revenue / q2_total) * 100, 2) AS pct_of_peak_total\r\n",
+        "FROM q2_revenue, total\r\n",
+        "ORDER BY peak_month_revenue DESC"
+      ]
+    },
+    {
+      "name": "b02aa9a1",
+      "displayName": "kpi4",
+      "queryLines": [
+        "SELECT \r\n",
+        "  ROUND(SUM(avg_delivery_days * order_count) / SUM(order_count), 2) AS average_days,\r\n",
+        "  SUM(order_count) AS total_orders\r\n",
+        "FROM electronic_retailer.03_Gold.data_cube_sales\r\n",
+        "WHERE avg_delivery_days IS NOT NULL"
+      ]
+    },
+    {
+      "name": "efba2031",
+      "displayName": "kpi5",
+      "queryLines": [
+        "SELECT \r\n",
+        "  customer_country AS country,\r\n",
+        "  ROUND(SUM(avg_delivery_days * order_count) / SUM(order_count), 2) AS avg_days,\r\n",
+        "  SUM(order_count) AS order_count\r\n",
+        "FROM electronic_retailer.03_Gold.data_cube_sales\r\n",
+        "WHERE avg_delivery_days IS NOT NULL\r\n",
+        "GROUP BY customer_country\r\n",
+        "ORDER BY avg_days DESC\r\n"
+      ]
+    },
+    {
+      "name": "f4672e58",
+      "displayName": "kpi7",
+      "queryLines": [
+        "WITH category_units AS (\r\n",
+        "  SELECT \r\n",
+        "    category,\r\n",
+        "    SUM(total_quantity) AS units_sold\r\n",
+        "  FROM electronic_retailer.03_Gold.data_cube_sales\r\n",
+        "  GROUP BY category\r\n",
+        "),\r\n",
+        "total AS (\r\n",
+        "  SELECT SUM(units_sold) AS total_units FROM category_units\r\n",
+        ")\r\n",
+        "SELECT \r\n",
+        "  category,\r\n",
+        "  units_sold,\r\n",
+        "  ROUND((units_sold / total_units) * 100, 2) AS percentage\r\n",
+        "FROM category_units, total\r\n",
+        "ORDER BY units_sold DESC\r\n"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "f40aa0a0",
+      "displayName": "dashboard",
+      "layout": [
+        {
+          "widget": {
+            "name": "top-3-revenue-months",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "7ad90c65",
+                  "fields": [
+                    {
+                      "name": "month",
+                      "expression": "`month`"
+                    },
+                    {
+                      "name": "month_name",
+                      "expression": "`month_name`"
+                    },
+                    {
+                      "name": "revenue_usd",
+                      "expression": "`revenue_usd`"
+                    },
+                    {
+                      "name": "percentage",
+                      "expression": "`percentage`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "showTitle": true,
+                "title": "2. Top 3 revenue months"
+              },
+              "widgetType": "table",
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "month"
+                  },
+                  {
+                    "fieldName": "month_name"
+                  },
+                  {
+                    "fieldName": "revenue_usd"
+                  },
+                  {
+                    "fieldName": "percentage"
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 6,
+            "width": 6,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "montly-revenue",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "63fab333",
+                  "fields": [
+                    {
+                      "name": "month",
+                      "expression": "`month`"
+                    },
+                    {
+                      "name": "revenue_usd",
+                      "expression": "`revenue_usd`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "showTitle": true,
+                "title": "1. Monthly Revenue Trend",
+                "showDescription": false
+              },
+              "mark": {
+                "size": 0
+              },
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "month",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "y": {
+                  "fieldName": "revenue_usd",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "label": {
+                  "show": false
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 1,
+            "width": 6,
+            "height": 5
+          }
+        },
+        {
+          "widget": {
+            "name": "top-3-product-categories-driving-revenue",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "c448dc67",
+                  "fields": [
+                    {
+                      "name": "category",
+                      "expression": "`category`"
+                    },
+                    {
+                      "name": "peak_month_revenue",
+                      "expression": "`peak_month_revenue`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "showTitle": true,
+                "title": "3. Top 3 product categories driving revenue"
+              },
+              "widgetType": "histogram",
+              "encodings": {
+                "x": {
+                  "fieldName": "category",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "fieldName": "peak_month_revenue",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 3,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "cdf3e95a",
+            "multilineTextboxSpec": {
+              "lines": [
+                "<span style=\"font-size: 24px;font-family: Times New Roman;\">**Electronic\\_Retailer\\_Dashboard**</span>"
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 12,
+            "height": 1
+          }
+        },
+        {
+          "widget": {
+            "name": "overall-avg-delivery-time-across-all-orders",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "b02aa9a1",
+                  "fields": [
+                    {
+                      "name": "average_days",
+                      "expression": "`average_days`"
+                    },
+                    {
+                      "name": "total_orders",
+                      "expression": "`total_orders`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "showTitle": true,
+                "title": "4. Overall avg delivery time across all orders"
+              },
+              "widgetType": "table",
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "average_days"
+                  },
+                  {
+                    "fieldName": "total_orders"
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 1,
+            "width": 6,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "slowest-5-countries-by-delivery-time",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "efba2031",
+                  "fields": [
+                    {
+                      "name": "avg_days",
+                      "expression": "`avg_days`"
+                    },
+                    {
+                      "name": "country",
+                      "expression": "`country`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "showTitle": true,
+                "title": "5. Slowest 5 countries by delivery time"
+              },
+              "widgetType": "funnel",
+              "encodings": {
+                "x": {
+                  "fieldName": "avg_days",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "y": {
+                  "fieldName": "country",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 9,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "8db8f300",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "f4672e58",
+                  "fields": [
+                    {
+                      "name": "percentage",
+                      "expression": "`percentage`"
+                    },
+                    {
+                      "name": "category",
+                      "expression": "`category`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "pie",
+              "encodings": {
+                "angle": {
+                  "fieldName": "percentage",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "category",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 9,
+            "width": 6,
+            "height": 6
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    },
+    {
+      "name": "1ef2554c",
+      "displayName": "Untitled page",
+      "layout": [
+        {
+          "widget": {
+            "name": "783073fa",
+            "spec": {
+              "version": 3,
+              "frame": {
+                "showTitle": false,
+                "showDescription": false
+              },
+              "widgetType": "line",
+              "encodings": {}
+            }
+          },
+          "position": {
+            "x": 1,
+            "y": 2,
+            "width": 6,
+            "height": 6
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    }
+  ],
+  "uiSettings": {
+    "theme": {
+      "widgetHeaderAlignment": "ALIGNMENT_UNSPECIFIED"
+    },
+    "applyModeEnabled": false
+  }
+}
