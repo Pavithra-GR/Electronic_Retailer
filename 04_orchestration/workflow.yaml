@@ -1,0 +1,36 @@
+resources:
+  jobs:
+    Electronic_Retailer:
+      name: Electronic_Retailer
+      tasks:
+        - task_key: Bronze_layer
+          notebook_task:
+            notebook_path: /Workspace/retailer/Electronic_Retailer/01_Bronze/nb_ingestion_azure_to_bronze
+            source: WORKSPACE
+        - task_key: Silver_layer
+          depends_on:
+            - task_key: Bronze_layer
+          notebook_task:
+            notebook_path: /Workspace/retailer/Electronic_Retailer/02_Silver/nb_data_clean_silver
+            source: WORKSPACE
+        - task_key: Gold_layer_fact_and_dim_table
+          depends_on:
+            - task_key: Silver_layer
+          notebook_task:
+            notebook_path: /Workspace/retailer/Electronic_Retailer/03_Gold/nb_fact_dim_gold
+            source: WORKSPACE
+        - task_key: Gold_data_cube
+          depends_on:
+            - task_key: Gold_layer_fact_and_dim_table
+          notebook_task:
+            notebook_path: /Workspace/retailer/Electronic_Retailer/03_Gold/nb_data_cube_gold
+            source: WORKSPACE
+        - task_key: gold_kpis
+          depends_on:
+            - task_key: Gold_data_cube
+          notebook_task:
+            notebook_path: /Workspace/retailer/Electronic_Retailer/03_Gold/nb_kpis_gold
+            source: WORKSPACE
+      queue:
+        enabled: true
+      performance_target: PERFORMANCE_OPTIMIZED
